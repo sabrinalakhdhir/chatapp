@@ -154,14 +154,11 @@ io.on('connection', (socket) => {
         }
         else {
             history.push(msgHistory);
-            io.emit('chat message', msgHistory); // "emit" will send to everyone, including the sender
-
+            // Send message to everyone on the chat  but the sender
+            socket.broadcast.emit('chat message', msgHistory); // "emit" will send to everyone, including the sender
+            // Send the message to the sender but bold the message
+            socket.emit('bold message', msgHistory);
         }
-
-        // Send the event and message to the client side
-        // Do i want to send the msghistory object instead?
-        //io.emit('chat message', msgHistory); // "emit" will send to everyone, including the sender
-
     });
 });
 

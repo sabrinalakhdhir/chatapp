@@ -17,7 +17,7 @@
         }
         #messages { list-style-type: none; margin: 0; padding: 0; position: absolute; bottom: 0; overflow-y: scroll; max-height: 100%; width: 80% } /*position: absolute; - for adding messages to bottom of chat*/
         #messages li { padding: 5px 10px; color: white}
-        #messages li:nth-child(odd) { background: rebeccapurple; }
+        #messages li:nth-child(odd) {  }
         #messages { margin-bottom: 40px; }
         #messages li time{ padding: 1px; color: thistle; font-size: 8px}
         #users { color: lavender }
@@ -65,8 +65,7 @@
         // Log the user object
         socket.on('new user', function(user) {
             console.log("new user: ", user);
-            //activeusers.push(user);
-            //updateActiveUsers(activeusers);
+            document.cookie = "Username=" + user.username;
         })
 
         // called after a name change, user connect or user disconnect to update the list of active users
@@ -121,6 +120,41 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         });
 
+        socket.on('bold message', function(msgHistory) {
+            let sender, senderColor, newMessage, newTime;
+            let colorRGB;
+
+            sender = msgHistory.sender;
+            senderColor = msgHistory.color; // needs to be broken into rgb values
+            newMessage = msgHistory.message;
+            newTime = msgHistory.timestamp;
+
+            r = senderColor.slice(0, 3);
+            g = senderColor.slice(3, 6);
+            b = senderColor.slice(6, 9);
+
+            colorRGB = "rgb(" + r + ", " + g + ", " + b + ")";
+
+            console.log("New message sent by: " + sender);
+            console.log("Content: " + newMessage);
+
+            // If the message is empty, do not send it
+            if (newMessage === "" || newMessage === " ") {
+                // do nothing
+            }
+            else {
+                //console.log("message color should be: " + colorValue);//+ r + ", " + g + ", " + b) DEBUGGING ONLY
+                // User isnt tied to the socket right now - how can i fix this
+                // add a new line, set text on that line to the message that was just received
+                $('#messages').append($('<li>').text(sender + ": " + newTime + ", " + newMessage).css({"color": colorRGB, "font-weight": "bold", "font-style": "italic"}))
+            }
+
+            // Scrolling and auto-scroll to bottom
+            window.scrollTo(0, document.body.scrollHeight); // auto scroll to the bottom when a new message received
+            let chatBox = document.getElementById('messages');
+            chatBox.scrollTop = chatBox.scrollHeight;
+        })
+
         socket.on('color change', function(msg, time, color, username) {
             // color change event
             $('#messages').append($('<li>').text(username + ": " + time + ", " + msg).css('color', color))
@@ -151,19 +185,9 @@
         }
 
         function showActive(user) {
-            $('#users').append($('<li>').text(user.username));
+            $('#users').append($('<li>').text(user.username).css('color', user.color));
         }
-        /*
-        function updateActiveUsers(activeUsers) {
-            // First, empty the users section
-            $('users').empty();
-            // For each user in the array, add their name to the list
-            for(let i = 0; i < activeusers.length; i++) {
-                $('users').append($('<li>').text(activeusers[i].username));
-            }
 
-        }
-        */
         let checkUsername;
 
         function checkCookie() {
@@ -196,19 +220,6 @@
             return "";
         }
 
-        function showActiveUsers(username) {
-            let i = 0;
-            console.log("Array length: ", activeUsers.length)
-            //while (i <= activeUsers.length) {
-                // if not already in the array, add it to the array
-                if (username !== activeUsers[i]) {
-                    activeUsers.push(username);
-                }
-                console.log(activeUsers[i]);
-                $('#users').append($('<li>').text(activeUsers[i]));
-                i++;
-            //}
-        }
         //$('#users').append($('<li>').text(username));
         //Cookies
         /*
