@@ -1,0 +1,237 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Socket.IO chat</title>
+    <style>
+        * { margin: 0 auto; padding: 0; box-sizing: border-box; max-width: 960px; align-content: center;}
+        body { font: 13px Helvetica, Arial; background: black; color: whitesmoke;  }
+        form { background: lavender; padding: 3px; position: fixed; bottom: 0; width: 100%; display: flex; flex-direction: row;}
+        form input { border: 0; padding: 10px; width: 90%; margin-right: 0.5%; background: whitesmoke }
+        form button { width: 9%; background: mediumpurple; border: none; padding: 10px; }
+        /*.messages { grid-area: messages; overflow-y: scroll}
+        .activeUsers { grid-area: activeUsers }
+        .grid-container { display: grid; grid-template-areas: 'activeUsers''messages'; grid-gap: 10px; }*/
+        .columnMessages { float: left; width: 75%; margin: 0; padding: 0; max-height: 100%; position: absolute; bottom: 0; overflow-y: scroll; }
+        .columnUsers { float: right; width: 20%; padding: 10px; height: 100%; border: thick gray;
+        }
+        #messages { list-style-type: none; margin: 0; padding: 0; position: absolute; bottom: 0; overflow-y: scroll; max-height: 100%; width: 80% } /*position: absolute; - for adding messages to bottom of chat*/
+        #messages li { padding: 5px 10px; color: white}
+        #messages li:nth-child(odd) { background: rebeccapurple; }
+        #messages { margin-bottom: 40px; }
+        #messages li time{ padding: 1px; color: thistle; font-size: 8px}
+        #users { color: lavender }
+        #users li { padding: 5px 10px; color: white }
+
+    </style>
+</head>
+<body>
+<div class = "grid-container">
+    <div>
+        <ul id="messages" class = "columnMessages"></ul>
+    </div>
+    <div id="users" class = "columnUsers"> Active Users </div>
+    <!--<ul id="messages"></ul>
+    <div id="users"> Active Users </div> -->
+</div>
+<!--
+<div id="users"> Active Users </div>
+<div><ul id="messages"></ul> </div>
+<ul id="messages"></ul>
+<div id="users"> Active Users </div> -->
+<form action="">
+    <input id="m" autocomplete="off" /><button>Send</button>
+</form>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"
+        integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+        crossorigin= "anonymous"></script>
+<script>
+    $(function () {
+        var socket = io();
+        let r, g, b;
+        //let activeusers = [];
+
+        $('form').submit(function(e){
+            e.preventDefault(); // prevents page reloading
+            socket.emit('chat message', $('#m').val()); // send message event
+            //socket.emit('timestamp', time);
+            $('#m').val(''); // erase previously sent message
+            return false;
+        });
+
+        // Log the user object
+        socket.on('new user', function(user) {
+            console.log("new user: ", user);
+            //activeusers.push(user);
+            //updateActiveUsers(activeusers);
+        })
+
+        // called after a name change, user connect or user disconnect to update the list of active users
+        socket.on('update users', function(users) {
+            // First, empty the users section
+            $('#users').empty();
+            // create the list of active users
+            $('#users').text("Active Users");
+            users.forEach(showActive);
+        })
+
+        socket.on('new name', function(name) {
+            $('#messages').append($('<li>').text("Your username is: " + name));
+        })
+
+        socket.on('disconnected', function(user) {
+        })
+
+
+        socket.on('chat message', function(msgHistory){ // socket.on = listening on client's side
+            let sender, senderColor, newMessage, newTime;
+            let colorRGB;
+
+            sender = msgHistory.sender;
+            senderColor = msgHistory.color; // needs to be broken into rgb values
+            newMessage = msgHistory.message;
+            newTime = msgHistory.timestamp;
+
+            r = senderColor.slice(0, 3);
+            g = senderColor.slice(3, 6);
+            b = senderColor.slice(6, 9);
+
+            colorRGB = "rgb(" + r + ", " + g + ", " + b + ")";
+
+            console.log("New message sent by: " + sender);
+            console.log("Content: " + newMessage);
+
+            // If the message is empty, do not send it
+            if (newMessage === "" || newMessage === " ") {
+                // do nothing
+            }
+            else {
+                //console.log("message color should be: " + colorValue);//+ r + ", " + g + ", " + b) DEBUGGING ONLY
+                // User isnt tied to the socket right now - how can i fix this
+                // add a new line, set text on that line to the message that was just received
+                $('#messages').append($('<li>').text(sender + ": " + newTime + ", " + newMessage).css('color', colorRGB))
+            }
+
+            // Scrolling and auto-scroll to bottom
+            window.scrollTo(0, document.body.scrollHeight); // auto scroll to the bottom when a new message received
+            let chatBox = document.getElementById('messages');
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        socket.on('color change', function(msg, time, color, username) {
+            // color change event
+            $('#messages').append($('<li>').text(username + ": " + time + ", " + msg).css('color', color))
+        });
+
+        socket.on('name change', function(msg,time, username) {
+            // name change event
+            $('#messages').append($('<li>').text(username + ": " + time + ", " + msg))
+        })
+
+        socket.on('history', function(history) {
+            let msg, color;
+            // for each object in the history array
+            history.forEach(showHistory);
+        })
+
+        function showHistory(msg) {
+            let r, g, b, colorRGB, senderColor;
+
+            senderColor = msg.color;
+
+            r = senderColor.slice(0, 3);
+            g = senderColor.slice(3, 6);
+            b = senderColor.slice(6, 9);
+
+            colorRGB = "rgb(" + r + ", " + g + ", " + b + ")";
+            $('#messages').append($('<li>').text(msg.sender + ": " + msg.timestamp + ", " + msg.message).css('color', colorRGB));
+        }
+
+        function showActive(user) {
+            $('#users').append($('<li>').text(user.username));
+        }
+        /*
+        function updateActiveUsers(activeUsers) {
+            // First, empty the users section
+            $('users').empty();
+            // For each user in the array, add their name to the list
+            for(let i = 0; i < activeusers.length; i++) {
+                $('users').append($('<li>').text(activeusers[i].username));
+            }
+
+        }
+        */
+        let checkUsername;
+
+        function checkCookie() {
+            // check if the user connecting already has a stored cookie with a username
+            checkUsername = getCookie("Username");
+            // if the username has something stored in it, make that their username
+            if (checkUsername !== "") {
+                //alert("Welcome back " + checkUsername);
+                // this will be their username until they change it
+            }
+            // If it is empty, use the username that was sent in
+            else {
+                checkUsername = username;
+                document.cookie = "username ="+ username + "; expires=Fri, 01 Jan 2021 00:00:00 UTC;" ;
+            }
+        }
+
+        function getCookie(cookiename) {
+            var name = cookiename + "=";
+            var ca = document.cookie.split(';');
+            for(var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) === ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) === 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        function showActiveUsers(username) {
+            let i = 0;
+            console.log("Array length: ", activeUsers.length)
+            //while (i <= activeUsers.length) {
+                // if not already in the array, add it to the array
+                if (username !== activeUsers[i]) {
+                    activeUsers.push(username);
+                }
+                console.log(activeUsers[i]);
+                $('#users').append($('<li>').text(activeUsers[i]));
+                i++;
+            //}
+        }
+        //$('#users').append($('<li>').text(username));
+        //Cookies
+        /*
+        socket.on('new user', function(user) {
+            //$.cookie("Username", user.username);
+            console.log("new cookie: " + user.username);
+        })
+        */
+        // from: https://www.geeksforgeeks.org/how-to-set-and-unset-cookies-using-jquery/
+        //let addCookie=()=>{
+            //$.cookie("Username",
+            //    username);
+            //$("p").text("cookie added");
+        //}
+        //let removeCookie=()=>{
+            //$.removeCookie("Username", username);
+            //$("p").text("cookie removed");
+        //}
+        // Testing to make sure cookie works
+        //var cookieValue = $.cookie("Username");
+        //console.log(cookieValue);
+    })
+</script>
+</body>
+</html>
+
