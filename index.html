@@ -52,7 +52,6 @@
     $(function () {
         var socket = io();
         let r, g, b;
-        //let activeusers = [];
 
         $('form').submit(function(e){
             e.preventDefault(); // prevents page reloading
@@ -65,7 +64,12 @@
         // Log the user object
         socket.on('new user', function(user) {
             console.log("new user: ", user);
-            document.cookie = "Username=" + user.username;
+            // Check if they already have a stored username
+            // Act appropriately
+            //checkCookie(user);
+            //user.username = originalUsername;
+            //console.log("new cookie: ", user.username);
+            document.cookie = "username=" + user.username;
         })
 
         // called after a name change, user connect or user disconnect to update the list of active users
@@ -74,14 +78,32 @@
             $('#users').empty();
             // create the list of active users
             $('#users').text("Active Users");
-            users.forEach(showActive);
+            //if (users.length >= 1) {
+                users.forEach(showActive);
+            //}
         })
 
-        socket.on('new name', function(name) {
+        socket.on('new name', function(name, user) {
             $('#messages').append($('<li>').text("Your username is: " + name));
         })
 
-        socket.on('disconnected', function(user) {
+        socket.on('disconnected', function(users, user) {
+            /*
+            // First, empty the users section
+            $('#users').empty();
+            // Remove the user who just left
+            for(let i =0; i <= users.length; i++) {
+                if (user.username === users[i].username) {
+                    console.log("Deleting: " + user.username);
+                    delete users[i];
+                }
+            }
+            // create the list of active users
+            $('#users').text("Active Users");
+            if (users.length >= 0) {
+                users.forEach(showActive);
+            }
+            */
         })
 
 
@@ -161,6 +183,8 @@
         });
 
         socket.on('name change', function(msg,time, username) {
+             // Add a new cookie with their new username
+            //document.cookie = "username =" + username + "; expires=Fri, 01 Jan 2021 00:00:00 UTC;";
             // name change event
             $('#messages').append($('<li>').text(username + ": " + time + ", " + msg))
         })
@@ -185,24 +209,22 @@
         }
 
         function showActive(user) {
+            console.log(user.username);
             $('#users').append($('<li>').text(user.username).css('color', user.color));
         }
 
-        let checkUsername;
+        let originalUsername;
 
-        function checkCookie() {
+        function checkCookie(user) {
             // check if the user connecting already has a stored cookie with a username
-            checkUsername = getCookie("Username");
+            originalUsername = getCookie("username");
             // if the username has something stored in it, make that their username
-            if (checkUsername !== "") {
-                //alert("Welcome back " + checkUsername);
-                // this will be their username until they change it
+            if (originalUsername !== "") {
+                //user.username = originalUsername;
             }
-            // If it is empty, use the username that was sent in
-            else {
-                checkUsername = username;
-                document.cookie = "username ="+ username + "; expires=Fri, 01 Jan 2021 00:00:00 UTC;" ;
-            }
+            originalUsername = user.username;
+            //Otherwise, add a cookie with their username
+            document.cookie = "username ="+ user.username + "; expires=Fri, 01 Jan 2021 00:00:00 UTC;" ;
         }
 
         function getCookie(cookiename) {

@@ -55,7 +55,7 @@ io.on('connection', (socket) => {
     io.emit('new user', user);
 
     // socket.emit will send the content to only the new user
-    socket.emit('new name', user.username);
+    socket.emit('new name', user.username, user);
     console.log("current active users:" + users); // Debugging
 
     // if there is history, send it to the client side
@@ -70,9 +70,11 @@ io.on('connection', (socket) => {
         console.log('user disconnected'); // Debugging
         for(let i = 0; i < users.length; i++) {
             if (user.username === users[i].username) {
+                console.log("Deleting user: " + users[i].username);
                 delete users[i];
             }
         }
+
         io.emit('update users', users);
     });
 
@@ -128,7 +130,7 @@ io.on('connection', (socket) => {
         }
 
         else if (msg.includes("/color")) {
-            let username, colorValue, r, g, b;
+            let username, colorValue, colorRGB, r, g, b;
             // Remove the /color from the string and update the user's display color
             colorValue = msg.slice(7, msg.length);
             // Make sure the user entered the color in the right format
@@ -139,7 +141,7 @@ io.on('connection', (socket) => {
                 r = colorValue.slice(0, 3);
                 g = colorValue.slice(3, 6);
                 b = colorValue.slice(6, 9);
-                colorValue = "rgb(" + r + "," + g + "," + b+ ")";
+                colorRGB = "rgb(" + r + "," + g + "," + b+ ")";
                 for (let i = 0; i < users.length; i++) {
                     if (users[i].color === msgHistory.color) {
                         users[i].color = colorValue;
@@ -148,7 +150,7 @@ io.on('connection', (socket) => {
                     console.log("Color " + i + ": " + users[i].color);
                 }
                 msg = "You changed your colour to " + user.color;
-                socket.emit('color change', msg, time, colorValue, username)
+                socket.emit('color change', msg, time, colorRGB, username)
             }
             //history.pop();
         }
