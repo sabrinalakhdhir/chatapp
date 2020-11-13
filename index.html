@@ -9,12 +9,8 @@
         form { background: lavender; padding: 3px; position: fixed; bottom: 0; width: 100%; display: flex; flex-direction: row;}
         form input { border: 0; padding: 10px; width: 90%; margin-right: 0.5%; background: whitesmoke }
         form button { width: 9%; background: mediumpurple; border: none; padding: 10px; }
-        /*.messages { grid-area: messages; overflow-y: scroll}
-        .activeUsers { grid-area: activeUsers }
-        .grid-container { display: grid; grid-template-areas: 'activeUsers''messages'; grid-gap: 10px; }*/
         .columnMessages { float: left; width: 75%; margin: 0; padding: 0; max-height: 100%; position: absolute; bottom: 0; overflow-y: scroll; }
-        .columnUsers { float: right; width: 20%; padding: 10px; height: 100%; border: thick gray;
-        }
+        .columnUsers { float: right; width: 20%; padding: 10px; height: 100%; border: thick gray;}
         #messages { list-style-type: none; margin: 0; padding: 0; position: absolute; bottom: 0; overflow-y: scroll; max-height: 100%; width: 80% } /*position: absolute; - for adding messages to bottom of chat*/
         #messages li { padding: 5px 10px; color: white}
         #messages li:nth-child(odd) {  }
@@ -63,12 +59,21 @@
 
         // Log the user object
         socket.on('new user', function(user) {
+            let storedCookie;
+
             console.log("new user: ", user);
             // Check if they already have a stored username
             // Act appropriately
             //checkCookie(user);
             //user.username = originalUsername;
             //console.log("new cookie: ", user.username);
+            storedCookie = getCookie("username");
+            console.log("Stored username: " + storedCookie);
+            // If there is already a user name stored in a cookie, update the username variable
+            if (storedCookie !== "" || storedCookie !== " ") {
+                user.username = storedCookie;
+            }
+            // Add a cookie with the username
             document.cookie = "username=" + user.username;
         })
 
@@ -183,8 +188,10 @@
         });
 
         socket.on('name change', function(msg,time, username) {
-             // Add a new cookie with their new username
-            //document.cookie = "username =" + username + "; expires=Fri, 01 Jan 2021 00:00:00 UTC;";
+            // Expire the original cookie
+            //document.cookie = "username =" + username + "; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+            // Overwrite with a new cookie with their new username
+            document.cookie = "username =" + username + "; expires=Fri, 01 Jan 2021 00:00:00 UTC;";
             // name change event
             $('#messages').append($('<li>').text(username + ": " + time + ", " + msg))
         })
