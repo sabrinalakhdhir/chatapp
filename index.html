@@ -22,18 +22,6 @@
     </style>
 </head>
 <body>
-<!--
-<div class = "grid-container">
-    <div>
-        <ul id="messages" class = "columnMessages"></ul>
-    </div>
-    <div id="users" class = "columnUsers"> Active Users </div>
-
-</div>
-<form action="">
-    <input id="m" autocomplete="off" /><button>Send</button>
-</form>
--->
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
@@ -59,31 +47,23 @@
             let storedCookie = "";
 
             console.log("new user: ", user);
-            //if (user.id === socket.id) {
-                storedCookie = getCookie("username");
-                console.log("Stored username: " + storedCookie + ". Current username: " + user.username);
-            //}
+            storedCookie = getCookie("username");
+            console.log("Stored username: " + storedCookie + ". Current username: " + user.username);
+
             // If there is already a user name stored in a cookie, update the username variable
             if (storedCookie === "") {
                 storedCookie = user.username;
                 console.log("username stored: " + user.username)
             }
-            /*
-                || storedCookie !== " ") {
-                user.username = storedCookie;
-                console.log("updated username to: " + user.username);
-            }
-            */
+
             else {
                  user.username = storedCookie;
                 console.log("username updated to: " + user.username)
             }
-            //user.username = storedCookie;
+
             // Add a cookie with the username
             document.cookie = "username=" + user.username;
             socket.emit('found cookie', user);
-            //socket.emit('no cookie', user);
-
         })
 
         // called after a name change, user connect or user disconnect to update the list of active users
@@ -103,22 +83,7 @@
         })
 
         socket.on('disconnected', function(users, user) {
-            /*
-            // First, empty the users section
-            $('#users').empty();
-            // Remove the user who just left
-            for(let i =0; i <= users.length; i++) {
-                if (user.username === users[i].username) {
-                    console.log("Deleting: " + user.username);
-                    delete users[i];
-                }
-            }
-            // create the list of active users
-            $('#users').text("Active Users");
-            if (users.length >= 0) {
-                users.forEach(showActive);
-            }
-            */
+
         })
 
 
@@ -230,8 +195,10 @@
             $('#users').append($('<li>').text(user.username).css('color', user.color));
         }
 
-        let originalUsername;
 
+        // followed code snippets found on stackoverflow regarding cookie use and on W3Schools
+        // took guidance from there for both functions included below
+        let originalUsername;
         function checkCookie(user) {
             // check if the user connecting already has a stored cookie with a username
             originalUsername = getCookie("username");
@@ -258,28 +225,6 @@
             }
             return "";
         }
-
-        //$('#users').append($('<li>').text(username));
-        //Cookies
-        /*
-        socket.on('new user', function(user) {
-            //$.cookie("Username", user.username);
-            console.log("new cookie: " + user.username);
-        })
-        */
-        // from: https://www.geeksforgeeks.org/how-to-set-and-unset-cookies-using-jquery/
-        //let addCookie=()=>{
-            //$.cookie("Username",
-            //    username);
-            //$("p").text("cookie added");
-        //}
-        //let removeCookie=()=>{
-            //$.removeCookie("Username", username);
-            //$("p").text("cookie removed");
-        //}
-        // Testing to make sure cookie works
-        //var cookieValue = $.cookie("Username");
-        //console.log(cookieValue);
     })
 </script>
 <div class = "grid-container">
@@ -287,14 +232,7 @@
         <ul id="messages" class = "columnMessages"></ul>
     </div>
     <div id="users" class = "columnUsers"> Active Users </div>
-    <!--<ul id="messages"></ul>
-    <div id="users"> Active Users </div> -->
 </div>
-<!--
-<div id="users"> Active Users </div>
-<div><ul id="messages"></ul> </div>
-<ul id="messages"></ul>
-<div id="users"> Active Users </div> -->
 <form action="">
     <input id="m" autocomplete="off" /><button>Send</button>
 </form>
