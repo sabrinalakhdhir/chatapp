@@ -5,7 +5,7 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 
 // split every 3 characters to get r g b values
-var userColors = ["220020060", "255215000", "255218185", "144238144", "000206209", "135206250", "255182193", "245222179"];
+var userColors = ["204204255", "255204229", "204255153", "153255204", "153255255", "255255153", "224224224", "204229255"];
 var usernames = ["user1", "user2", "user3", "user4", "user5", "user6", "user7", "user8"];
 let counter = 0;
 
@@ -28,7 +28,6 @@ const message = {
 const history = [];
 const users = [];
 
-
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
@@ -39,39 +38,53 @@ io.on('connection', (socket) => {
 
     // Create a user object
     const user = Object.create(connection);
+
     // Assign it information - socketID, username, color
     user.id = socket.id;
     user.username = usernames[counter];
     user.color = userColors[counter];
     console.log(user); // Debugging
 
-    // Add the user to the array of online users
-    users.push(user);
-    io.emit('update users', users);
-    // Increase the counter so it is ready for the next user
-    counter++;
-
     // Emit the new user event end the user/connection object to the client-side
     io.emit('new user', user);
 
-    // socket.emit will send the content to only the new user
-    socket.emit('new name', user.username, user);
-    console.log("current active users:" + users); // Debugging
+    // update the user's name based on the cookie that was checked
+    socket.on('found cookie', function(updatedUser) {
+        // only do the following for the new user
+        if (updatedUser.id === user.id) {
+            // Updating the username based on the cookie that was or was not found
+            user.username = updatedUser.username;
+
+            // Add the user to the array of online users
+            users.push(user);
+            console.log(users); // Debugging
+
+            // Increase the counter so it is ready for the next user
+            counter++;
+
+            // socket.emit will send the content to only the new user
+            socket.emit('new name', user.username);
+        }
+
+        console.log("current active users:" + users); // Debugging
+
+        io.emit('update users', users);
+    })
 
     // if there is history, send it to the client side
     if (history.length !== 0) {
         socket.emit('history', history); // send the history object to the client-side
     }
-    //io.emit('history', history); // send the history object to the client-side
 
 
     // needs to be checked on the client side to update active users list
     socket.on('disconnect', () => {
         console.log('user disconnected'); // Debugging
         for(let i = 0; i < users.length; i++) {
+            // if the username of the disconnected user matches a username in the users array, delete that element as they are no longer an active user
             if (user.username === users[i].username) {
                 console.log("Deleting user: " + users[i].username);
-                delete users[i];
+                users.splice(i, 1);
             }
         }
 

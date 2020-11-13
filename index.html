@@ -22,22 +22,18 @@
     </style>
 </head>
 <body>
+<!--
 <div class = "grid-container">
     <div>
         <ul id="messages" class = "columnMessages"></ul>
     </div>
     <div id="users" class = "columnUsers"> Active Users </div>
-    <!--<ul id="messages"></ul>
-    <div id="users"> Active Users </div> -->
+
 </div>
-<!--
-<div id="users"> Active Users </div>
-<div><ul id="messages"></ul> </div>
-<ul id="messages"></ul>
-<div id="users"> Active Users </div> -->
 <form action="">
     <input id="m" autocomplete="off" /><button>Send</button>
 </form>
+-->
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
@@ -59,36 +55,42 @@
 
         // Log the user object
         socket.on('new user', function(user) {
+
             let storedCookie;
 
             console.log("new user: ", user);
-            // Check if they already have a stored username
-            // Act appropriately
-            //checkCookie(user);
-            //user.username = originalUsername;
-            //console.log("new cookie: ", user.username);
             storedCookie = getCookie("username");
             console.log("Stored username: " + storedCookie);
             // If there is already a user name stored in a cookie, update the username variable
             if (storedCookie !== "" || storedCookie !== " ") {
                 user.username = storedCookie;
+                //console.log("updated username to: " + user.username);
             }
+            else {
+                storedCookie = user.username;
+                //console.log("username being stored: " + user.username)
+            }
+            user.username = storedCookie;
             // Add a cookie with the username
             document.cookie = "username=" + user.username;
+            socket.emit('found cookie', user);
+            //socket.emit('no cookie', user);
+
         })
 
         // called after a name change, user connect or user disconnect to update the list of active users
         socket.on('update users', function(users) {
             // First, empty the users section
             $('#users').empty();
+            console.log("Emptied active users list");
             // create the list of active users
             $('#users').text("Active Users");
-            //if (users.length >= 1) {
+            if (users.length > 0) {
                 users.forEach(showActive);
-            //}
+            }
         })
 
-        socket.on('new name', function(name, user) {
+        socket.on('new name', function(name) {
             $('#messages').append($('<li>').text("Your username is: " + name));
         })
 
@@ -272,6 +274,22 @@
         //console.log(cookieValue);
     })
 </script>
+<div class = "grid-container">
+    <div>
+        <ul id="messages" class = "columnMessages"></ul>
+    </div>
+    <div id="users" class = "columnUsers"> Active Users </div>
+    <!--<ul id="messages"></ul>
+    <div id="users"> Active Users </div> -->
+</div>
+<!--
+<div id="users"> Active Users </div>
+<div><ul id="messages"></ul> </div>
+<ul id="messages"></ul>
+<div id="users"> Active Users </div> -->
+<form action="">
+    <input id="m" autocomplete="off" /><button>Send</button>
+</form>
 </body>
 </html>
 
